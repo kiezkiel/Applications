@@ -1,0 +1,10 @@
+matplotlib
+neptune
+numpy
+numpy
+pandas
+pandas_datareader
+plotly
+prophet
+streamlit
+yfinance
