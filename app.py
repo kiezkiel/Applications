@@ -23,7 +23,7 @@ start = "2010-01-01"
 end = date.today().strftime("%Y-%m-%d")
 st.title("Stock Market Prediction")
 
-stocks = ("AAPL","NVDA", 'MSFT', "GME","AMD","MSRT")
+stocks = ("AAPL","NVDA", 'MSFT', "GME","AMD","MSRT","META","GOOG","JPM","MA","CAT","YMM","LYV","COCO","NFLX","AMZN")
 selected_stocks = st.selectbox("Select The Stocks for prediction", stocks)
 
 n_years = st.slider("Years of Prediction:", 0,1 , 4)
