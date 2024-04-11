@@ -1,3 +1,5 @@
+from _curses import window
+import datetime
 import streamlit as st
 from datetime import date 
 import yfinance as yf
@@ -14,19 +16,20 @@ import itertools
 import numpy as np
 import plotly.tools as tls
 import neptune
-
+import ta
 run = neptune.init_run(
     project="yuki-pikazo/Jotaro",
     api_token="eyJhcGlfYWRkcmVzcyI6Imh0dHBzOi8vYXBwLm5lcHR1bmUuYWkiLCJhcGlfdXJsIjoiaHR0cHM6Ly9hcHAubmVwdHVuZS5haSIsImFwaV9rZXkiOiIwOTg0NWVmOC03YTdiLTRhMmMtYmQ5Zi04OGQxMzJjNGJkYWMifQ==",
 )  # your cred
-start = "2010-01-01"
+start = "1980-09-01"
+#end = "2023-10-04"
 end = date.today().strftime("%Y-%m-%d")
 st.title("Stock Market Prediction")
 
-stocks = ("AAPL","NVDA", 'MSFT', "GME","AMD","MSRT","META","GOOG","JPM","MA","CAT","YMM","LYV","COCO","NFLX","AMZN")
+stocks = ("TSLA","NVDA", 'MSFT', "GME","AMD","MSRT","META","GOOG","JPM","AAPL","MA","CAT","YMM","LYV","COCO","NFLX","AMZN","ETSY","YELP","3LMI")
 selected_stocks = st.selectbox("Select The Stocks for prediction", stocks)
 
-n_years = st.slider("Years of Prediction:", 0,1 , 4)
+n_years = st.slider("Years of Prediction:", 1 , 4)
 period = n_years * 365 
 
 @st.cache_data
@@ -35,6 +38,7 @@ def load_data(ticker):
     data.reset_index(inplace=True)
     return data
 
+last_updated = datetime.datetime.now()
 data_load_state = st.text("Load Data....")
 data = load_data(selected_stocks)
 data_load_state.text("Loading data ..... done")
@@ -51,11 +55,15 @@ def plot_raw_data():
 
 plot_raw_data()
 
+#data['ma7'] = data['Close'].rolling(window=7).mean()
+#data['ma30'] = data['Close'].rolling(window=30).mean()
 
-df_train = data[['Date', 'Close']]
-df_train = df_train.rename(columns={"Date": "ds", "Close": "y"})
+#claculate rsi
+#data['rsi'] =  ta.momentum.rsi(data['Close'])
+df_train = data[['Date', 'Close','High','Low','Volume',]]#'High','Low','Volume',
+df_train = df_train.fillna(0.0)
+df_train = df_train.rename(columns={"Date": "ds", "Close": "y","High":"high","Low":"low","Volume":"volume"})#"High":"high","Low":"low","Volume":"volume"
 # Define the parameter grid
-
 @st.cache_data
 def tune_model(df_train, param_grid):
     # Placeholder for the best RMSE and best params
@@ -81,17 +89,40 @@ def tune_model(df_train, param_grid):
     return best_params
 
 param_grid = {  
-    'changepoint_prior_scale': [0.001, 0.01, 0.1, 0.5],
-    'seasonality_prior_scale': [0.01, 0.1, 1.0, 10.0],
+    'changepoint_prior_scale': [0.001, 0.01, 0.1, 0.5, 1.0],
+    'seasonality_prior_scale': [0.01, 0.1, 1.0, 10.0, 20.0],
+    'growth': ['linear'],
+    'n_changepoints' : [25, 50 , 70],
+    'changepoint_range': [0.8, 0.9]
 }
 
 # Use the cached function to get the best parameters
 best_params = tune_model(df_train, param_grid)
 m = Prophet(**best_params)
-m.add_seasonality(name='weekly', period=7, fourier_order=6)  # Add custom weekly seasonality
+m.add_regressor('high')
+m.add_regressor('low')
+m.add_regressor('volume')
+#m.add_regressor('open')
+#m.add_regressor('adj_close')
+#m.add_regressor('ma7')
+#m.add_regressor('ma30')
+#m.add_regressor('rsi')
+m.add_seasonality(name='weekly', period=7, fourier_order=20)  # Add custom weekly seasonality
+m.fit(df_train)
 # Fit the model with the best parameters
-m = Prophet(**best_params).fit(df_train)
 future = m.make_future_dataframe(periods=period)
+# Merge df_train into future
+future = future.merge(df_train, on='ds', how ='left')
+
+# Fill any NaN values in 'high', 'low', and 'volume' columns of future
+future['high'].fillna(method='ffill', inplace=True)
+future['low'].fillna(method='ffill', inplace=True)
+future['volume'].fillna(method='ffill', inplace=True)
+#future['open'].fillna(method='ffill', inplace=True)
+#future['adj_close'].fillna(method='ffill', inplace=True)
+#future['ma7'].fillna(method='ffill', inplace=True)
+#future['ma30'].fillna(method='ffill', inplace=True)
+#future['rsi'].fillna(method='ffill', inplace=True)
 forecast = m.predict(future)
 
 # Detect anomalies by getting the difference between the actual and predicted values
