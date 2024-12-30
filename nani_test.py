@@ -10,7 +10,7 @@ from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import LSTM, Dense, Dropout
 
 # Define API Key (replace with your NewsAPI key)
-API_KEY = "2827dbb6b7ef46439e751af01f6a20c0"
+API_KEY = "YOUR_NEWSAPI_KEY"
 
 # Define date range for data
 start = "1980-09-01"
@@ -37,7 +37,7 @@ def fetch_news_sentiment(stock):
     """
     Fetch recent news articles for the selected stock and calculate sentiment polarity.
     """
-    url = f"https://newsapi.org/v2/everything?q=TSLA&apiKey={API_KEY}"
+    url = f"https://newsapi.org/v2/everything?q={stock}&apiKey={API_KEY}"
     with st.sidebar:
         st.write(f"Fetching news data from: {url}")  # Log API call
 
