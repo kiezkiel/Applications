@@ -16,7 +16,7 @@ API_KEY = "YOUR_NEWSAPI_KEY"
 start = "1980-09-01"
 end = date.today().strftime("%Y-%m-%d")
 
-st.title("Enhanced Stock Market Prediction with Sentiment Analysis")
+st.title("Enhanced Stock Market Prediction with Sentiment Analysis2")
 
 # Select stock
 stocks = ("TSLA", "NVDA", "MSFT", "GME", "AMD", "META", "GOOG", "AAPL", "AMZN", "NFLX", "JPM")
@@ -92,18 +92,12 @@ data_load_state.text("Loading data ... done")
 st.subheader("Raw Data with Sentiment")
 st.write(data.tail())
 
-# Verify column names
-st.sidebar.write("Column names in the DataFrame:", data.columns)
-
-# Check if the 'Close' column exists
-if "Close" in data.columns:
-    st.subheader("Time Series Data")
-    st.line_chart(data[["Close"]])
-else:
-    st.error("Column 'Close' not found in the DataFrame. Available columns are: " + ", ".join(data.columns))
+# Plot only sentiment data
+st.subheader("Sentiment Data")
+st.line_chart(data[["Sentiment"]])
 
 # Feature selection
-features = ["Close", "Sentiment"] if "Close" in data.columns else ["Sentiment"]
+features = ["Sentiment"]
 scaler = MinMaxScaler()
 scaled_data = scaler.fit_transform(data[features])
 
