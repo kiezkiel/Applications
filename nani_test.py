@@ -92,12 +92,18 @@ data_load_state.text("Loading data ... done")
 st.subheader("Raw Data with Sentiment")
 st.write(data.tail())
 
-# Plot raw data
-st.subheader("Time Series Data")
-st.line_chart(data[["Close"]])
+# Verify column names
+st.sidebar.write("Column names in the DataFrame:", data.columns)
+
+# Check if the 'Close' column exists
+if "Close" in data.columns:
+    st.subheader("Time Series Data")
+    st.line_chart(data[["Close"]])
+else:
+    st.error("Column 'Close' not found in the DataFrame. Available columns are: " + ", ".join(data.columns))
 
 # Feature selection
-features = ["Close", "Sentiment"]  # Include sentiment as a feature
+features = ["Close", "Sentiment"] if "Close" in data.columns else ["Sentiment"]
 scaler = MinMaxScaler()
 scaled_data = scaler.fit_transform(data[features])
 
