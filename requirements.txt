@@ -9,3 +9,4 @@ prophet
 streamlit
 yfinance
 ta
+textblob
