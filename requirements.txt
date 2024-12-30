@@ -10,3 +10,4 @@ streamlit
 yfinance
 ta
 textblob
+scikit-learn
